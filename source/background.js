@@ -14,19 +14,22 @@ var POSITION_VERTICAL = /^(top|center|bottom)$/;
 var SIZE_SINGLE = /^(cover|contain)$/;
 var KEYWORD = /^(inherit|initial)$/i;
 
-var normalizeUrl = function(value) {
-	return value.replace(url(), function(match) {
-		return match
-			.replace(/^url\(\s+/, 'url(')
-			.replace(/\s+\)$/, ')');
+var getNormalizedValues = function(value){
+	return normalizeColor(value).split(/(url\(.*?\))/ig).reduce(function(values, val, index){
+		if(index % 2) { // background-image (url)
+			values.push(val.replace(/^url\(\s+/, 'url(').replace(/\s+\)$/, ')'));
+		} else { // none url background shorthand segment
+			values = values.concat(val.replace(/\//, ' / ').split(/\s+/));
+		}
+		return values;
+	}, []).filter(function(value){
+		return value !== '';
 	});
 };
 
 module.exports = function(value) {
 	var result = {};
-	var values = normalizeUrl(normalizeColor(value))
-		.replace(/\//, ' / ')
-		.split(/\s+/);
+	var values = getNormalizedValues(value);
 
 	var first = values[0];
 
@@ -106,8 +109,6 @@ module.exports = function(value) {
 					return;
 				}
 			}
-		} else {
-			return;
 		}
 	}
 
